@@ -1,5 +1,6 @@
 package com.example.calculator;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
@@ -15,8 +16,12 @@ public class MainActivity extends AppCompatActivity {
     private TextView displayOperation;
 
     // these store pending operands and operators
-    private Double operandPassed = null;
-    private String pendingOperation = "=";
+    private Double operandInMemory = null;
+    public String pendingOperation = "=";
+
+    // keys for the bundle
+    public static final String STATE_PENDING_OP = "Pending operation";
+    public static final String STATE_OPERAND = "Operand";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,38 +101,60 @@ public class MainActivity extends AppCompatActivity {
 
     private void performOperation(Double value, String operation) {
 //        displayOperation.setText(operation);
-        if (null == operandPassed) {
-            operandPassed = value;
+        if (null == operandInMemory) {
+            operandInMemory = value;
         } else {
 
             // now evaluate pending input...
             if (pendingOperation.equals("=")) {
-                pendingOperation = operation;
+                pendingOperation = operation;   // so, no change!
             }
             switch (pendingOperation) {
                 case "=":
-                    operandPassed = value;
+                    operandInMemory = value;    // pressing = first will ultimately clear the operand stored
                     break;
                 case "/":
                     if (value == 0) {
-                        operandPassed = 0.0;     // currently set division by zero as zero, despite being wrong
+                        operandInMemory = 0.0;     // currently set division by zero as zero, despite being wrong
                     } else {
-                        operandPassed /= value;
+                        operandInMemory /= value;
                     }
                     break;
                 case "*":
-                    operandPassed *= value;
+                    operandInMemory *= value;
                     break;
                 case "-":
-                    operandPassed -= value;
+                    operandInMemory -= value;
                     break;
                 case "+":
-                    operandPassed += value;
+                    operandInMemory += value;
                     break;
             }
         }
 
-        result.setText(operandPassed.toString());
+        result.setText(operandInMemory.toString());
         newNumber.setText("");
     }
+
+    // without saving the state of the app, the pending operator data is lost (result text field is saved)
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        // use keys to reliably refer to data on restore
+        outState.putString(STATE_PENDING_OP, pendingOperation);
+        if (operandInMemory != null){
+            outState.putDouble(STATE_OPERAND, operandInMemory);
+        }
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        pendingOperation = savedInstanceState.getString(STATE_PENDING_OP);
+        operandInMemory = savedInstanceState.getDouble(STATE_OPERAND);
+        displayOperation.setText(pendingOperation);
+    }
+
+
 }
