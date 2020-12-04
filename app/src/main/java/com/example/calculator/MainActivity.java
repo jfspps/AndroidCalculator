@@ -14,8 +14,8 @@ public class MainActivity extends AppCompatActivity {
     private EditText newNumber;
     private TextView displayOperation;
 
-    private Double operand1;
-    private Double operand2;
+    // these store pending operands and operators
+    private Double operandPassed = null;
     private String pendingOperation = "=";
 
     @Override
@@ -74,9 +74,16 @@ public class MainActivity extends AppCompatActivity {
                 Button b = (Button) v;
                 String op = b.getText().toString();
                 String value = newNumber.getText().toString();
-                if (value.length() != 0){
-                    performOperation(value, op);
+
+                // look out for cases when entering decimal for the first time (this does not process fractions yet)
+                try {
+                    Double doubleValue = Double.valueOf(value);
+                    performOperation(doubleValue, op);
+                } catch (NumberFormatException exception) {
+                    newNumber.setText("");
                 }
+                pendingOperation = op;
+                displayOperation.setText(pendingOperation);
             }
         };
 
@@ -87,7 +94,40 @@ public class MainActivity extends AppCompatActivity {
         buttonSubtract.setOnClickListener(operationListener);
     }
 
-    private void performOperation(String value, String operation){
-        displayOperation.setText(operation);
+    private void performOperation(Double value, String operation) {
+//        displayOperation.setText(operation);
+        if (null == operandPassed) {
+            operandPassed = value;
+        } else {
+
+            // now evaluate pending input...
+            if (pendingOperation.equals("=")) {
+                pendingOperation = operation;
+            }
+            switch (pendingOperation) {
+                case "=":
+                    operandPassed = value;
+                    break;
+                case "/":
+                    if (value == 0) {
+                        operandPassed = 0.0;     // currently set division by zero as zero, despite being wrong
+                    } else {
+                        operandPassed /= value;
+                    }
+                    break;
+                case "*":
+                    operandPassed *= value;
+                    break;
+                case "-":
+                    operandPassed -= value;
+                    break;
+                case "+":
+                    operandPassed += value;
+                    break;
+            }
+        }
+
+        result.setText(operandPassed.toString());
+        newNumber.setText("");
     }
 }
