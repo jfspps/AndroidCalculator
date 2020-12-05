@@ -9,6 +9,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import java.util.function.DoubleToLongFunction;
+
 public class MainActivity extends AppCompatActivity {
 
     private EditText result;
@@ -50,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
         Button buttonMultiply = (Button) findViewById(R.id.buttonMultiply);
         Button buttonPlus = (Button) findViewById(R.id.buttonPlus);
         Button buttonSubtract = (Button) findViewById(R.id.buttonSubtract);
+        Button buttonNegate = (Button) findViewById(R.id.buttonNegate);
+        Button buttonClear = (Button) findViewById(R.id.buttonClear);
 
         // initialise the listeners
         // 1. sends the numeric input to the newNumber text box
@@ -71,6 +75,41 @@ public class MainActivity extends AppCompatActivity {
         button8.setOnClickListener(listener);
         button9.setOnClickListener(listener);
         buttonDot.setOnClickListener(listener);
+
+        // leave this listener independent of operations below (the only goal here is to change the sign
+        // of newNumber input)
+        View.OnClickListener negateListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (newNumber.getText() == null || newNumber.getText().toString().isEmpty()) {
+                    newNumber.setText("-");
+                } else if (newNumber.getText().toString().equals("-")) {
+                    newNumber.setText("");
+                } else {
+                    String value = newNumber.getText().toString();
+                    try {
+                        double doubleValue = Double.parseDouble(value);
+                        doubleValue *= -1;
+                        newNumber.setText(String.valueOf(doubleValue));
+                    } catch (NumberFormatException e) {
+                        newNumber.setText("");
+                    }
+                }
+            }
+        };
+        buttonNegate.setOnClickListener(negateListener);
+
+        View.OnClickListener clearListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                newNumber.setText("");
+                pendingOperation = "=";
+                displayOperation.setText("");
+                result.setText("");
+                operandInMemory = null;
+            }
+        };
+        buttonClear.setOnClickListener(clearListener);
 
         // 2. listeners for the operation buttons
         View.OnClickListener operationListener = new View.OnClickListener() {
@@ -142,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         // use keys to reliably refer to data on restore
         outState.putString(STATE_PENDING_OP, pendingOperation);
-        if (operandInMemory != null){
+        if (operandInMemory != null) {
             outState.putDouble(STATE_OPERAND, operandInMemory);
         }
         super.onSaveInstanceState(outState);
